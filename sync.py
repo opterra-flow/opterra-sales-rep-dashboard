@@ -22,7 +22,9 @@ def fetch_json(url):
     import urllib.request
     req = urllib.request.Request(url, headers={
         "Authorization": f"Bearer {KEY}",
-        "Version": "2021-07-28"
+        "Version": "2021-07-28",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
     })
     with urllib.request.urlopen(req) as resp:
         return json.loads(resp.read())

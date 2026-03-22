@@ -169,6 +169,22 @@ td.clickable:hover strong { color:var(--accent); text-decoration:underline; }
 .add-submit-btn { background:var(--lime); color:var(--forest); }
 .add-submit-btn:hover { opacity:0.85; }
 .add-submit-btn:disabled { opacity:0.4; cursor:not-allowed; }
+/* Collapsible section */
+.collapse-toggle { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:all 0.2s; }
+.collapse-toggle:hover { border-color:var(--lime); }
+.collapse-toggle .ct-title { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--text); }
+.collapse-toggle .ct-arrow { font-size:14px; color:var(--text-dim); transition:transform 0.2s; }
+.collapse-toggle.open .ct-arrow { transform:rotate(180deg); }
+.collapse-body { display:none; background:var(--surface); border:1px solid var(--border); border-top:none; border-radius:0 0 10px 10px; padding:16px 18px; }
+.collapse-toggle.open { border-radius:10px 10px 0 0; }
+.collapse-toggle.open + .collapse-body { display:block; }
+.asset-link { display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; text-decoration:none; color:var(--text); margin-bottom:8px; transition:border-color 0.2s; }
+.asset-link:last-child { margin-bottom:0; }
+.asset-link:hover { border-color:var(--lime); }
+.asset-link .al-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+.asset-link .al-text { flex:1; }
+.asset-link .al-title { font-size:13px; font-weight:600; }
+.asset-link .al-sub { font-size:11px; color:var(--text-dim); margin-top:1px; }
 /* Call activity log */
 .call-log-section { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px; }
 .call-log-summary { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
@@ -383,6 +399,30 @@ td.clickable:hover strong { color:var(--accent); text-decoration:underline; }
     <div class="call-log-feed" id="callLogFeed">
       <div style="text-align:center;color:var(--text-dim);padding:20px;font-size:12px">Status changes will appear here as you update phone statuses above</div>
     </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="collapse-toggle" onclick="this.classList.toggle('open')">
+    <span class="ct-title">Sales Rep Assets</span>
+    <span class="ct-arrow">&#9660;</span>
+  </div>
+  <div class="collapse-body">
+    <a href="https://api.leadconnectorhq.com/widget/bookings/mikyla-meckelson-personal-calendar-q3z_uqgdq" target="_blank" class="asset-link">
+      <div class="al-icon" style="background:rgba(111,207,151,0.15);color:var(--green)">&#128197;</div>
+      <div class="al-text"><div class="al-title">Book a Demo Call</div><div class="al-sub">Schedule a demo with a prospect</div></div>
+      <span style="color:var(--text-dim)">&#8594;</span>
+    </a>
+    <a href="https://opterraventures.com/free-ai-guide" target="_blank" class="asset-link">
+      <div class="al-icon" style="background:rgba(212,225,87,0.15);color:var(--lime)">&#128218;</div>
+      <div class="al-text"><div class="al-title">Free AI Guide</div><div class="al-sub">Share with prospects — lead magnet freebie</div></div>
+      <span style="color:var(--text-dim)">&#8594;</span>
+    </a>
+    <a href="https://opterraventures.com" target="_blank" class="asset-link">
+      <div class="al-icon" style="background:rgba(201,169,97,0.15);color:var(--gold)">&#127758;</div>
+      <div class="al-text"><div class="al-title">Opterra Website</div><div class="al-sub">opterraventures.com</div></div>
+      <span style="color:var(--text-dim)">&#8594;</span>
+    </a>
   </div>
 </div>
 

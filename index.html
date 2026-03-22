@@ -186,12 +186,19 @@ td.clickable:hover strong { color:var(--accent); text-decoration:underline; }
 .call-icon.ci-demo { background:var(--green); }
 .call-icon.ci-no { background:var(--red); }
 .call-icon.ci-vm { background:#7e57c2; }
-.call-log-select { background:var(--surface2); border:1px solid var(--border); color:var(--text-dim); padding:3px 6px; border-radius:5px; font-size:10px; outline:none; cursor:pointer; width:100%; font-family:'Montserrat',sans-serif; }
-.call-log-select:focus { border-color:var(--lime); }
-.call-log-select.logged-call { border-color:var(--text-dim); color:var(--text-dim); }
-.call-log-select.logged-pickup { border-color:var(--gold); color:var(--gold); }
-.call-log-select.logged-demo { border-color:var(--green); color:var(--green); }
-.call-log-select.logged-no { border-color:var(--red); color:var(--red); }
+.phone-status { display:flex; align-items:center; gap:6px; }
+.phone-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.phone-dot.dot-none { background:var(--text-dim); opacity:0.3; }
+.phone-dot.dot-vm { background:#7e57c2; }
+.phone-dot.dot-no { background:var(--red); }
+.phone-dot.dot-demo { background:var(--green); }
+.phone-dot.dot-lead { background:var(--lime); }
+.phone-select { background:var(--surface2); border:1px solid var(--border); color:var(--text-dim); padding:2px 4px; border-radius:5px; font-size:10px; outline:none; cursor:pointer; font-family:'Montserrat',sans-serif; }
+.phone-select:focus { border-color:var(--lime); }
+.phone-select.ps-vm { border-color:#7e57c2; color:#7e57c2; }
+.phone-select.ps-no { border-color:var(--red); color:var(--red); }
+.phone-select.ps-demo { border-color:var(--green); color:var(--green); }
+.phone-select.ps-lead { border-color:var(--lime); color:var(--lime); }
 /* Leaderboard */
 .leaderboard { margin-top:16px; }
 .leaderboard h4 { font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--gold); margin-bottom:10px; }
@@ -932,7 +939,14 @@ function renderTable(data) {
       '<td class="clickable" onclick="openDetail('+i+')"><strong>'+c.name+'</strong></td>'+
       '<td>'+(c.company||'—')+'</td>'+
       '<td>'+c.city+'</td>'+
-      '<td>'+formatPhone(c.phone)+'</td>'+
+      '<td><div class="phone-status"><span class="phone-dot dot-'+(c.phoneStatus||'none')+'"></span>'+formatPhone(c.phone)+'</div>'+
+      '<select class="phone-select'+(c.phoneStatus?' ps-'+c.phoneStatus:'')+'" onchange="setPhoneStatus('+i+',this)">'+
+        '<option value=""'+((!c.phoneStatus)?' selected':'')+'>Status...</option>'+
+        '<option value="lead"'+((c.phoneStatus==='lead')?' selected':'')+'>Lead</option>'+
+        '<option value="vm"'+((c.phoneStatus==='vm')?' selected':'')+'>Voicemail</option>'+
+        '<option value="no"'+((c.phoneStatus==='no')?' selected':'')+'>No</option>'+
+        '<option value="demo"'+((c.phoneStatus==='demo')?' selected':'')+'>Demo Booked</option>'+
+      '</select></td>'+
       '<td>'+(c.email ? '<span class="status-dot dot-has"></span>'+c.email : '<span class="status-dot dot-missing"></span><span style="color:var(--text-dim)">—</span>')+'</td>'+
       '<td>'+c.tags.map(function(t){return '<span class="tag '+tagClass(t)+'">'+tagLabel(t)+'</span>';}).join('')+'</td>'+
       '<td><select class="'+stageClass+'" onchange="onStageChange('+i+',this)">'+
@@ -1737,6 +1751,7 @@ async function loadAllContactsFromGHL() {
     populateVoiceContacts();
     loadPipelineFromGHL();
     statusEl.textContent = floridaContacts.length;
+    restorePhoneStatuses();
     updateKpis();
     showToast('Contacts synced', floridaContacts.length + ' Florida leads loaded from GHL', 'success');
   } catch (err) {
@@ -1772,6 +1787,50 @@ async function loadContactDetails() {
       .catch(function() {});
     }));
   }
+}
+
+// Phone status tracking
+var PHONE_STATUS_KEY = 'opterra_phone_status';
+var phoneStatuses = {};
+try { phoneStatuses = JSON.parse(localStorage.getItem(PHONE_STATUS_KEY) || '{}'); } catch(e){}
+
+function setPhoneStatus(idx, sel) {
+  var c = floridaContacts[idx];
+  var val = sel.value;
+  c.phoneStatus = val;
+  sel.className = 'phone-select' + (val ? ' ps-'+val : '');
+
+  // Update the dot
+  var row = sel.closest('tr');
+  var dot = row.querySelector('.phone-dot');
+  if (dot) dot.className = 'phone-dot dot-'+(val||'none');
+
+  // Save to localStorage
+  if (val) { phoneStatuses[c.ghlId] = val; }
+  else { delete phoneStatuses[c.ghlId]; }
+  localStorage.setItem(PHONE_STATUS_KEY, JSON.stringify(phoneStatuses));
+
+  // Add tag to GHL
+  if (val) {
+    var tagMap = { vm:'voicemail', no:'not-interested', demo:'demo-booked', lead:'hot-lead' };
+    var tag = tagMap[val];
+    if (tag) {
+      fetch(GHL_API + '/contacts/' + c.ghlId + '/tags', {
+        method: 'POST',
+        headers: { 'Authorization':'Bearer '+GHL_KEY, 'Version':'2021-07-28', 'Content-Type':'application/json' },
+        body: JSON.stringify({ tags: [tag] })
+      }).catch(function(){});
+    }
+    var labels = { vm:'Voicemail', no:'Not Interested', demo:'Demo Booked', lead:'Lead' };
+    showToast(labels[val], c.name, val==='demo' ? 'success' : '');
+  }
+}
+
+// Restore phone statuses after contacts load
+function restorePhoneStatuses() {
+  floridaContacts.forEach(function(c) {
+    if (phoneStatuses[c.ghlId]) c.phoneStatus = phoneStatuses[c.ghlId];
+  });
 }
 
 // Init — load live from GHL

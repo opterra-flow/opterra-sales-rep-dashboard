@@ -452,62 +452,8 @@ var STAGES = {
   'closed':        {id:'1e5c8b73-301b-4b76-9b1f-c9411f8db16c', label:'Closed'},
 };
 var STAGE_KEYS = ['new-lead','cold-called','contacted','call-booked','proposal-sent','closed'];
-var OUTREACH_TAGS = ['cold-called','guerrilla-marketing','demo-booked'];
 
 // On load: fetch current tags + opportunities from GHL
-function loadOutreachFromGHL() {
-  floridaContacts.forEach(function(c, i) {
-    fetch(GHL_API + '/contacts/' + c.ghlId, {
-      headers: { 'Authorization': 'Bearer ' + GHL_KEY, 'Version': '2021-07-28' }
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      var contact = data.contact || data;
-      var tags = contact.tags || [];
-      var found = '';
-      OUTREACH_TAGS.forEach(function(ot) { if (tags.indexOf(ot) !== -1) found = ot; });
-      if (found !== c.outreach) {
-        c.outreach = found;
-        var sel = document.querySelector('[data-outreach-idx="'+i+'"]');
-        if (sel) { sel.value = found; sel.className = found ? 'outreach-select tagged' : 'outreach-select'; }
-      }
-      if (!c.email && contact.email) { c.email = contact.email; }
-    })
-    .catch(function(){});
-  });
-  // Load existing opportunities to set pipeline stages
-  loadPipelineFromGHL();
-}
-
-function loadPipelineFromGHL() {
-  fetch(GHL_API + '/opportunities/search?locationId=' + GHL_LOC + '&pipelineId=' + PIPELINE_ID + '&limit=100', {
-    headers: { 'Authorization': 'Bearer ' + GHL_KEY, 'Version': '2021-07-28' }
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    var opps = data.opportunities || [];
-    opps.forEach(function(opp) {
-      var cid = opp.contactId || (opp.contact && opp.contact.id);
-      if (!cid) return;
-      var contact = floridaContacts.find(function(c){ return c.ghlId === cid; });
-      if (!contact) return;
-      contact.oppId = opp.id;
-      contact.stageId = opp.pipelineStageId || '';
-      // Map stageId to our key
-      STAGE_KEYS.forEach(function(sk) {
-        if (STAGES[sk].id === contact.stageId) contact.stage = sk;
-      });
-    });
-    renderTable(floridaContacts);
-    updatePipelineCounts();
-  })
-  .catch(function(){});
-}
-
-function updatePipelineCounts() {
-  // Pipeline viz removed — counts tracked in GHL
-}
-
 function onStageChange(idx, selectEl) {
   var c = floridaContacts[idx];
   var newStage = selectEl.value;
@@ -624,36 +570,6 @@ function removeTagFromGHL(cid, tag, cb) {
     method:'DELETE', headers:{'Authorization':'Bearer '+GHL_KEY,'Version':'2021-07-28','Content-Type':'application/json'},
     body:JSON.stringify({tags:[tag]})
   }).then(function(r){return r.json().then(function(d){return{ok:r.ok,data:d}});}).then(function(r){cb(null,r)}).catch(function(e){cb(e)});
-}
-
-function onOutreachChange(idx, selectEl) {
-  var contact = floridaContacts[idx];
-  var newTag = selectEl.value;
-  var oldTag = contact.outreach;
-  if (newTag === oldTag) return;
-  selectEl.className = 'outreach-select saving';
-  function applyNew() {
-    if (!newTag) {
-      contact.outreach = '';
-      selectEl.className = 'outreach-select';
-      showToast('Tag removed', contact.name, 'success');
-      return;
-    }
-    addTagToGHL(contact.ghlId, newTag, function(err, res) {
-      if (err || !res.ok) {
-        selectEl.className = 'outreach-select error';
-        showToast('Failed', contact.name, 'error');
-        selectEl.value = oldTag;
-        setTimeout(function(){ selectEl.className = oldTag ? 'outreach-select tagged' : 'outreach-select'; }, 2000);
-        return;
-      }
-      contact.outreach = newTag;
-      selectEl.className = 'outreach-select tagged';
-      showToast('Tagged in GHL', contact.name + ' → ' + tagLabel(newTag), 'success');
-    });
-  }
-  if (oldTag) { removeTagFromGHL(contact.ghlId, oldTag, function(){ applyNew(); }); }
-  else { applyNew(); }
 }
 
 // Detail panel
@@ -919,17 +835,6 @@ function closeDetail() {
   document.body.style.overflow = '';
 }
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDetail(); });
-
-function callStatusBadge(ghlId) {
-  var cl = callLog[ghlId];
-  if (!cl || !cl.history || cl.history.length === 0) return '';
-  var iconMap = { 'call':'ci-call', 'pickup':'ci-pickup', 'demo':'ci-demo', 'no':'ci-no', 'vm':'ci-vm' };
-  var labelMap = { 'call':'C', 'pickup':'P', 'demo':'D', 'no':'N', 'vm':'V' };
-  var icons = cl.history.slice(-8).map(function(h) {
-    return '<span class="call-icon '+(iconMap[h]||'ci-call')+'" title="'+h+'">'+(labelMap[h]||'')+'</span>';
-  }).join('');
-  return '<div class="call-icons">'+icons+'</div>';
-}
 
 function renderTable(data) {
   var tbody = document.getElementById('flBody');
@@ -1389,266 +1294,7 @@ function submitNewContact() {
 function toggleKpi(el) { el.classList.toggle('expanded'); }
 
 // Update KPIs after data loads
-function updateKpis() {
-  var total = floridaContacts.length;
-  var withPhone = floridaContacts.filter(function(c){ return c.phone; }).length;
-  var withEmail = floridaContacts.filter(function(c){ return c.email; }).length;
-  var cities = {};
-  var segments = {};
-  var sources = {};
-  floridaContacts.forEach(function(c) {
-    if (c.city) cities[c.city] = (cities[c.city]||0)+1;
-    c.tags.forEach(function(t){ segments[t] = (segments[t]||0)+1; });
-    // source from GHL data
-  });
-  var cityCount = Object.keys(cities).length;
-  var topSeg = Object.entries(segments).sort(function(a,b){return b[1]-a[1];})[0];
-
-  document.getElementById('kpi-leads-val').textContent = total;
-  document.getElementById('kpi-leads-sub').textContent = total + ' Florida contacts in GHL';
-  document.getElementById('kpi-phone-val').textContent = withPhone;
-  document.getElementById('kpi-phone-sub').textContent = (total?Math.round(withPhone/total*100):0) + '% capture rate';
-  document.getElementById('kpi-email-val').textContent = withEmail;
-  document.getElementById('kpi-email-sub').textContent = (total?Math.round(withEmail/total*100):0) + '% — ' + (withEmail < total*0.5 ? 'needs enrichment' : 'good coverage');
-  document.getElementById('kpi-cities-val').textContent = cityCount;
-  document.getElementById('kpi-cities-sub').textContent = 'Across Florida';
-  // City list
-  var cityHtml = Object.entries(cities).sort(function(a,b){return b[1]-a[1];}).map(function(e){
-    return '<span style="display:inline-block;margin:2px 4px;padding:2px 8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border)">'+e[0]+' <strong style="color:var(--lime)">'+e[1]+'</strong></span>';
-  }).join('');
-  document.getElementById('kpi-cities-list').innerHTML = cityHtml;
-  // Segment
-  if (topSeg) {
-    var segLabels = {holistic_medical:'Holistic Medical',med_spa:'Med Spa',chiro:'Chiro',acupuncture:'Acupuncture',massage_therapy:'Massage',biohacking_recovery:'Biohacking'};
-    document.getElementById('kpi-segment-val').textContent = segLabels[topSeg[0]] || topSeg[0];
-    document.getElementById('kpi-segment-sub').textContent = topSeg[1] + ' of ' + total + ' (' + Math.round(topSeg[1]/total*100) + '%)';
-    var segHtml = Object.entries(segments).sort(function(a,b){return b[1]-a[1];}).map(function(e){
-      return '<div style="display:flex;justify-content:space-between;padding:3px 0"><span>'+(segLabels[e[0]]||e[0])+'</span><strong style="color:var(--lime)">'+e[1]+'</strong></div>';
-    }).join('');
-    document.getElementById('kpi-segment-breakdown').innerHTML = segHtml;
-  }
-  document.getElementById('kpi-source-val').textContent = 'Optiflow';
-  document.getElementById('kpi-source-sub').textContent = 'Primary lead gen system';
-}
-
 // === COLD CALL TRACKER ===
-var CALL_STORAGE_KEY = 'opterra_call_stats';
-var CALL_LOG_KEY = 'opterra_call_log';
-var callStats = loadCallStats();
-var callLog = loadCallLog(); // per-contact call history
-var sessionStartTime = Date.now();
-var sessionTimerInterval = null;
-
-function loadCallStats() {
-  try {
-    var stored = localStorage.getItem(CALL_STORAGE_KEY);
-    if (stored) {
-      var data = JSON.parse(stored);
-      var today = new Date().toISOString().slice(0,10);
-      if (data.date === today) return data;
-    }
-  } catch(e){}
-  return { date: new Date().toISOString().slice(0,10), reps: { 'Sales Rep 1': { calls:0, pickups:0, demos:0, nos:0, streak:0, bestStreak:0 } }, activeRep: 'Sales Rep 1' };
-}
-
-function loadCallLog() {
-  try {
-    var stored = localStorage.getItem(CALL_LOG_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch(e){}
-  return {}; // keyed by ghlId: { calls:0, pickups:0, demos:0, nos:0, lastResult:'', lastCall:'' }
-}
-
-function saveCallStats() {
-  callStats.date = new Date().toISOString().slice(0,10);
-  localStorage.setItem(CALL_STORAGE_KEY, JSON.stringify(callStats));
-}
-
-function saveCallLog() {
-  localStorage.setItem(CALL_LOG_KEY, JSON.stringify(callLog));
-}
-
-function getActiveRepStats() {
-  return callStats.reps[callStats.activeRep];
-}
-
-function populateCallContactSelect() {
-  var sel = document.getElementById('callContactSelect');
-  sel.innerHTML = '<option value="">Select a lead before logging...</option>';
-  floridaContacts.forEach(function(c, i) {
-    var opt = document.createElement('option');
-    opt.value = i;
-    var log = callLog[c.ghlId];
-    var status = log ? ' [' + log.lastResult + ']' : '';
-    opt.textContent = c.name + (c.company ? ' — ' + c.company : '') + status;
-    sel.appendChild(opt);
-  });
-}
-
-var selectedCallContactIdx = '';
-
-function logCallFromRow(idx, selectEl) {
-  var type = selectEl.value;
-  if (!type) return;
-  selectedCallContactIdx = idx;
-  logCall(type);
-  // Color the dropdown
-  selectEl.className = 'call-log-select logged-' + type;
-  selectEl.value = '';
-}
-
-function selectContactForCall(idx) {
-  selectedCallContactIdx = idx;
-  var c = floridaContacts[idx];
-  var bar = document.getElementById('callBarContact');
-  bar.innerHTML = '<span style="color:var(--lime);font-weight:600">' + c.name + '</span>' +
-    (c.company ? '<span style="color:var(--text-dim)"> — ' + c.company + '</span>' : '') +
-    '<br><span style="font-size:11px;color:var(--text-dim)">Tap a circle to log the call result</span>';
-  // Highlight the row
-  document.querySelectorAll('#flBody tr').forEach(function(r,ri) {
-    r.style.background = ri === idx ? 'rgba(212,225,87,0.08)' : '';
-  });
-  // Scroll call bar into view
-  document.getElementById('callBarContact').scrollIntoView({ behavior:'smooth', block:'nearest' });
-  showToast('Selected', c.name, '');
-}
-
-function logCall(type) {
-  var rep = getActiveRepStats();
-  var selIdx = selectedCallContactIdx;
-
-  // Update global stats
-  if (type === 'call') rep.calls++;
-  else if (type === 'pickup') { rep.calls++; rep.pickups++; rep.streak++; if(rep.streak>rep.bestStreak) rep.bestStreak=rep.streak; }
-  else if (type === 'demo') { rep.calls++; rep.pickups++; rep.demos++; rep.streak++; if(rep.streak>rep.bestStreak) rep.bestStreak=rep.streak; }
-  else if (type === 'no') { rep.calls++; rep.nos++; rep.streak = 0; }
-
-  // Attach to selected contact
-  if (selIdx !== '' && selIdx !== undefined) {
-    var c = floridaContacts[selIdx];
-    if (!callLog[c.ghlId]) callLog[c.ghlId] = { calls:0, pickups:0, demos:0, nos:0, lastResult:'', lastCall:'', history:[] };
-    var cl = callLog[c.ghlId];
-    if (!cl.history) cl.history = [];
-    cl.calls++;
-    cl.lastCall = new Date().toISOString();
-    cl.history.push(type);
-    if (type === 'pickup') { cl.pickups++; cl.lastResult = 'picked up'; }
-    else if (type === 'demo') { cl.pickups++; cl.demos++; cl.lastResult = 'demo booked'; }
-    else if (type === 'no') { cl.nos++; cl.lastResult = 'no'; }
-    else { cl.lastResult = 'no answer'; }
-    saveCallLog();
-
-    // Add note to GHL
-    var resultLabels = { call:'No Answer', pickup:'Picked Up', demo:'Demo Booked', no:'Not Interested' };
-    var noteBody = '## Call Log — ' + new Date().toLocaleString() + '\n\n**Result:** ' + (resultLabels[type]||type) + '\n**Total calls to this lead:** ' + cl.calls;
-    fetch(GHL_API + '/contacts/' + c.ghlId + '/notes', {
-      method: 'POST',
-      headers: { 'Authorization':'Bearer '+GHL_KEY, 'Version':'2021-07-28', 'Content-Type':'application/json' },
-      body: JSON.stringify({ body: noteBody })
-    }).catch(function(){});
-
-    showToast(type === 'demo' ? 'Demo booked!' : type === 'pickup' ? 'Pick up!' : type === 'no' ? 'No' : 'Called', c.name + (c.company ? ' — ' + c.company : ''), type === 'demo' ? 'success' : '');
-
-    renderTable(floridaContacts);
-  } else {
-    showToast('Logged', 'Select a lead to attach the call', '');
-  }
-
-  saveCallStats();
-  renderCallStats();
-}
-
-function undoCall(type) {
-  var rep = getActiveRepStats();
-  // Don't go below zero
-  if (type === 'call') { if (rep.calls > 0) rep.calls--; }
-  else if (type === 'pickup') { if (rep.pickups > 0) rep.pickups--; if (rep.calls > 0) rep.calls--; }
-  else if (type === 'demo') { if (rep.demos > 0) rep.demos--; if (rep.pickups > 0) rep.pickups--; if (rep.calls > 0) rep.calls--; }
-  else if (type === 'no') { if (rep.nos > 0) rep.nos--; if (rep.calls > 0) rep.calls--; }
-
-  // Undo from last selected contact if one was selected
-  var selIdx = selectedCallContactIdx;
-  if (selIdx !== '' && selIdx !== undefined) {
-    var c = floridaContacts[selIdx];
-    var cl = callLog[c.ghlId];
-    if (cl) {
-      if (cl.calls > 0) cl.calls--;
-      if (type === 'pickup' && cl.pickups > 0) cl.pickups--;
-      if (type === 'demo' && cl.demos > 0) cl.demos--;
-      if (type === 'no' && cl.nos > 0) cl.nos--;
-      if (cl.history && cl.history.length > 0) {
-        // Remove last matching type from history
-        for (var hi = cl.history.length-1; hi >= 0; hi--) {
-          if (cl.history[hi] === type) { cl.history.splice(hi,1); break; }
-        }
-      }
-      cl.lastResult = (cl.history && cl.history.length > 0) ? cl.history[cl.history.length-1] : '';
-      saveCallLog();
-      renderTable(floridaContacts);
-      }
-  }
-
-  saveCallStats();
-  renderCallStats();
-  showToast('Undone', type + ' -1', '');
-}
-
-function renderCallStats() {
-  var rep = getActiveRepStats();
-  document.getElementById('stat-calls').textContent = rep.calls;
-  document.getElementById('stat-pickups').textContent = rep.pickups;
-  document.getElementById('stat-demos').textContent = rep.demos;
-  document.getElementById('stat-nos').textContent = rep.nos;
-  document.getElementById('stat-streak').textContent = rep.streak;
-  var conv = rep.calls > 0 ? Math.round((rep.demos / rep.calls) * 100) : 0;
-  document.getElementById('stat-conversion').textContent = conv + '%';
-  // Summary line on collapsed card
-  var sumLine = document.getElementById('callSummaryLine');
-  if (sumLine) sumLine.textContent = rep.calls > 0 ? rep.calls + ' calls / ' + rep.demos + ' demos today' : '';
-  renderLeaderboard();
-}
-
-function renderLeaderboard() {
-  var rows = Object.entries(callStats.reps).map(function(e) {
-    var name = e[0], r = e[1];
-    var conv = r.calls > 0 ? Math.round((r.demos / r.calls) * 100) : 0;
-    return { name:name, calls:r.calls, pickups:r.pickups, demos:r.demos, nos:r.nos, conv:conv, bestStreak:r.bestStreak };
-  }).sort(function(a,b) { return b.demos-a.demos || b.pickups-a.pickups || b.calls-a.calls; });
-
-  var html = rows.map(function(r, i) {
-    return '<div class="lb-row'+(i===0?' first':'')+'">'
-      +'<div class="lb-rank">'+(i===0?'&#9733;':(i+1))+'</div>'
-      +'<div class="lb-name">'+r.name+'</div>'
-      +'<div class="lb-stats">'
-      +'<span>'+r.calls+' calls</span>'
-      +'<span>'+r.pickups+' picks</span>'
-      +'<span class="highlight">'+r.demos+' demos</span>'
-      +'<span>'+r.nos+' no\'s</span>'
-      +'</div>'
-      +'<div class="lb-rate">'+r.conv+'%</div>'
-      +'</div>';
-  }).join('');
-  document.getElementById('leaderboardRows').innerHTML = html;
-}
-
-function resetCallStats() {
-  if (!confirm('Reset today\'s call stats?')) return;
-  var rep = getActiveRepStats();
-  rep.calls=0; rep.pickups=0; rep.demos=0; rep.nos=0; rep.streak=0;
-  saveCallStats();
-  renderCallStats();
-  showToast('Stats reset', 'Starting fresh', 'success');
-}
-
-function startSessionTimer() {
-  sessionStartTime = Date.now();
-  sessionTimerInterval = setInterval(function() {
-    var elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
-    var m = Math.floor(elapsed / 60);
-    var s = elapsed % 60;
-    document.getElementById('sessionTimer').textContent = m + ':' + (s < 10 ? '0' : '') + s;
-  }, 1000);
-}
 
 
 // Live data loading from GHL
@@ -1750,8 +1396,7 @@ async function loadAllContactsFromGHL() {
     loadPipelineFromGHL();
     statusEl.textContent = floridaContacts.length;
     restorePhoneStatuses();
-    updateKpis();
-    showToast('Contacts synced', floridaContacts.length + ' Florida leads loaded from GHL', 'success');
+        showToast('Contacts synced', floridaContacts.length + ' Florida leads loaded from GHL', 'success');
   } catch (err) {
     statusEl.textContent = origText;
     showToast('Sync failed', String(err), 'error');
@@ -1834,7 +1479,6 @@ function restorePhoneStatuses() {
 // Init — render embedded data
 restorePhoneStatuses();
 renderTable(floridaContacts);
-updateKpis();
 populateVoiceContacts();
 </script>
 </body>

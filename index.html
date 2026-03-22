@@ -363,18 +363,30 @@ td.clickable:hover strong { color:var(--accent); text-decoration:underline; }
   </div>
 </div>
 
-<div class="kpi-row" id="kpiRow">
-  <div class="kpi" onclick="toggleKpi(this)" id="kpi-leads"><div class="label">Florida Leads</div><div class="value accent" id="kpi-leads-val">—</div><div class="sub" id="kpi-leads-sub">Loading from GHL...</div>
-    <div class="kpi-expand"><div style="font-size:12px;color:var(--text-dim)">Total contacts in GHL with state = Florida. Auto-refreshes every 5 minutes as new leads are scraped or added.</div></div>
-  </div>
-  <div class="kpi" onclick="toggleKpi(this)" id="kpi-phone"><div class="label">With Phone</div><div class="value green" id="kpi-phone-val">—</div><div class="sub" id="kpi-phone-sub">Loading...</div>
-    <div class="kpi-expand" id="callTrackerExpand">
-      <div style="font-size:12px;font-weight:600;color:var(--lime);margin-bottom:12px">COLD CALL TRACKER — tap to count</div>
+<div class="section">
+  <div class="kpi" onclick="toggleKpi(this)" id="kpi-phone" style="cursor:pointer">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div class="label">Cold Call Tracker</div>
+        <div style="display:flex;align-items:baseline;gap:16px">
+          <div class="value green" id="kpi-phone-val">—</div>
+          <span style="font-size:13px;color:var(--text-dim)" id="kpi-phone-sub">leads with phone</span>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);text-align:right">tap to open<br><span id="callSummaryLine" style="color:var(--lime);font-weight:600"></span></div>
+    </div>
+    <div class="kpi-expand" id="callTrackerExpand" style="padding-top:18px">
+      <div style="margin-bottom:14px">
+        <label style="font-size:10px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);display:block;margin-bottom:4px">Calling</label>
+        <select id="callContactSelect" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;width:100%;outline:none;font-family:'Montserrat',sans-serif" onclick="event.stopPropagation()">
+          <option value="">Select a lead before logging...</option>
+        </select>
+      </div>
       <div class="call-tracker-grid">
-        <div class="call-stat calls" onclick="event.stopPropagation();bumpStat('calls')"><div class="cs-val" id="stat-calls">0</div><div class="cs-label">Calls</div><div class="cs-plus">tap +1</div></div>
-        <div class="call-stat pickups" onclick="event.stopPropagation();bumpStat('pickups')"><div class="cs-val" id="stat-pickups">0</div><div class="cs-label">Pick Ups</div><div class="cs-plus">tap +1</div></div>
-        <div class="call-stat demos" onclick="event.stopPropagation();bumpStat('demos')"><div class="cs-val" id="stat-demos">0</div><div class="cs-label">Demos</div><div class="cs-plus">tap +1</div></div>
-        <div class="call-stat nos" onclick="event.stopPropagation();bumpStat('nos')"><div class="cs-val" id="stat-nos">0</div><div class="cs-label">No's</div><div class="cs-plus">tap +1</div></div>
+        <div class="call-stat calls" onclick="event.stopPropagation();logCall('call')"><div class="cs-val" id="stat-calls">0</div><div class="cs-label">Calls</div><div class="cs-plus">tap +1</div></div>
+        <div class="call-stat pickups" onclick="event.stopPropagation();logCall('pickup')"><div class="cs-val" id="stat-pickups">0</div><div class="cs-label">Pick Ups</div><div class="cs-plus">tap +1</div></div>
+        <div class="call-stat demos" onclick="event.stopPropagation();logCall('demo')"><div class="cs-val" id="stat-demos">0</div><div class="cs-label">Demos</div><div class="cs-plus">tap +1</div></div>
+        <div class="call-stat nos" onclick="event.stopPropagation();logCall('no')"><div class="cs-val" id="stat-nos">0</div><div class="cs-label">No's</div><div class="cs-plus">tap +1</div></div>
       </div>
       <div class="streak-bar"><span class="streak-fire">&#128293;</span><span class="streak-text">Pickup streak:</span><span class="streak-count" id="stat-streak">0</span></div>
       <div class="session-timer"><span>Session:</span><span class="timer-val" id="sessionTimer">0:00</span><span style="margin-left:auto;font-size:11px">Conversion: <strong id="stat-conversion" style="color:var(--green)">0%</strong></span></div>
@@ -384,18 +396,6 @@ td.clickable:hover strong { color:var(--accent); text-decoration:underline; }
       </div>
       <button class="call-reset-btn" onclick="event.stopPropagation();resetCallStats()">Reset today's session</button>
     </div>
-  </div>
-  <div class="kpi" onclick="toggleKpi(this)" id="kpi-email"><div class="label">With Email</div><div class="value orange" id="kpi-email-val">—</div><div class="sub" id="kpi-email-sub">Loading...</div>
-    <div class="kpi-expand"><div style="font-size:12px;color:var(--text-dim)">Contacts with email on file. Emails are pulled from GHL and enriched from scraping. Missing emails = enrichment opportunity.</div></div>
-  </div>
-  <div class="kpi" onclick="toggleKpi(this)" id="kpi-cities"><div class="label">Cities Covered</div><div class="value pink" id="kpi-cities-val">—</div><div class="sub" id="kpi-cities-sub">Loading...</div>
-    <div class="kpi-expand"><div id="kpi-cities-list" style="font-size:12px;color:var(--text-dim)"></div></div>
-  </div>
-  <div class="kpi" onclick="toggleKpi(this)" id="kpi-segment"><div class="label">Top Segment</div><div class="value" style="font-size:18px;color:var(--green)" id="kpi-segment-val">—</div><div class="sub" id="kpi-segment-sub">Loading...</div>
-    <div class="kpi-expand"><div id="kpi-segment-breakdown" style="font-size:12px"></div></div>
-  </div>
-  <div class="kpi" onclick="toggleKpi(this)" id="kpi-source"><div class="label">Lead Source</div><div class="value" style="font-size:18px;color:var(--accent)" id="kpi-source-val">—</div><div class="sub" id="kpi-source-sub">Loading...</div>
-    <div class="kpi-expand"><div id="kpi-source-breakdown" style="font-size:12px"></div></div>
   </div>
 </div>
 
@@ -932,6 +932,15 @@ function closeDetail() {
 }
 document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDetail(); });
 
+function callStatusBadge(ghlId) {
+  var cl = callLog[ghlId];
+  if (!cl || !cl.lastResult) return '<span style="font-size:10px;color:var(--text-dim)">—</span>';
+  var colors = { 'no answer':'var(--text-dim)', 'picked up':'var(--gold)', 'demo booked':'var(--lime)', 'no':'var(--red)' };
+  var color = colors[cl.lastResult] || 'var(--text-dim)';
+  return '<span style="font-size:10px;font-weight:600;color:'+color+'">'+cl.lastResult+'</span>' +
+    '<span style="font-size:9px;color:var(--text-dim);margin-left:4px">('+cl.calls+'x)</span>';
+}
+
 function renderTable(data) {
   var tbody = document.getElementById('flBody');
   tbody.innerHTML = data.map(function(c, i) {
@@ -941,8 +950,8 @@ function renderTable(data) {
       '<td class="clickable" onclick="openDetail('+i+')"><strong>'+c.name+'</strong></td>'+
       '<td>'+(c.company||'—')+'</td>'+
       '<td>'+c.city+'</td>'+
-      '<td>'+formatPhone(c.phone)+'</td>'+
-      '<td>'+(c.email ? '<span class="status-dot dot-has"></span>'+c.email : '<span class="status-dot dot-missing"></span><span style="color:var(--text-dim)">missing</span>')+'</td>'+
+      '<td>'+formatPhone(c.phone)+'<br>'+callStatusBadge(c.ghlId)+'</td>'+
+      '<td>'+(c.email ? '<span class="status-dot dot-has"></span>'+c.email : '<span class="status-dot dot-missing"></span><span style="color:var(--text-dim)">—</span>')+'</td>'+
       '<td>'+c.tags.map(function(t){return '<span class="tag '+tagClass(t)+'">'+tagLabel(t)+'</span>';}).join('')+'</td>'+
       '<td><select class="'+stageClass+'" onchange="onStageChange('+i+',this)">'+
         '<option value=""'+(stageVal===''?' selected':'')+'>— None —</option>'+
@@ -1427,7 +1436,9 @@ function updateKpis() {
 
 // === COLD CALL TRACKER ===
 var CALL_STORAGE_KEY = 'opterra_call_stats';
+var CALL_LOG_KEY = 'opterra_call_log';
 var callStats = loadCallStats();
+var callLog = loadCallLog(); // per-contact call history
 var sessionStartTime = Date.now();
 var sessionTimerInterval = null;
 
@@ -1436,7 +1447,6 @@ function loadCallStats() {
     var stored = localStorage.getItem(CALL_STORAGE_KEY);
     if (stored) {
       var data = JSON.parse(stored);
-      // Check if same day
       var today = new Date().toISOString().slice(0,10);
       if (data.date === today) return data;
     }
@@ -1444,24 +1454,80 @@ function loadCallStats() {
   return { date: new Date().toISOString().slice(0,10), reps: { 'Sales Rep 1': { calls:0, pickups:0, demos:0, nos:0, streak:0, bestStreak:0 } }, activeRep: 'Sales Rep 1' };
 }
 
+function loadCallLog() {
+  try {
+    var stored = localStorage.getItem(CALL_LOG_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch(e){}
+  return {}; // keyed by ghlId: { calls:0, pickups:0, demos:0, nos:0, lastResult:'', lastCall:'' }
+}
+
 function saveCallStats() {
   callStats.date = new Date().toISOString().slice(0,10);
   localStorage.setItem(CALL_STORAGE_KEY, JSON.stringify(callStats));
+}
+
+function saveCallLog() {
+  localStorage.setItem(CALL_LOG_KEY, JSON.stringify(callLog));
 }
 
 function getActiveRepStats() {
   return callStats.reps[callStats.activeRep];
 }
 
-function bumpStat(stat) {
+function populateCallContactSelect() {
+  var sel = document.getElementById('callContactSelect');
+  sel.innerHTML = '<option value="">Select a lead before logging...</option>';
+  floridaContacts.forEach(function(c, i) {
+    var opt = document.createElement('option');
+    opt.value = i;
+    var log = callLog[c.ghlId];
+    var status = log ? ' [' + log.lastResult + ']' : '';
+    opt.textContent = c.name + (c.company ? ' — ' + c.company : '') + status;
+    sel.appendChild(opt);
+  });
+}
+
+function logCall(type) {
   var rep = getActiveRepStats();
-  rep[stat]++;
-  if (stat === 'pickups') {
-    rep.streak++;
-    if (rep.streak > rep.bestStreak) rep.bestStreak = rep.streak;
-  } else if (stat === 'nos') {
-    rep.streak = 0;
+  var selIdx = document.getElementById('callContactSelect').value;
+
+  // Update global stats
+  if (type === 'call') rep.calls++;
+  else if (type === 'pickup') { rep.calls++; rep.pickups++; rep.streak++; if(rep.streak>rep.bestStreak) rep.bestStreak=rep.streak; }
+  else if (type === 'demo') { rep.calls++; rep.pickups++; rep.demos++; rep.streak++; if(rep.streak>rep.bestStreak) rep.bestStreak=rep.streak; }
+  else if (type === 'no') { rep.calls++; rep.nos++; rep.streak = 0; }
+
+  // Attach to selected contact
+  if (selIdx !== '') {
+    var c = floridaContacts[parseInt(selIdx)];
+    if (!callLog[c.ghlId]) callLog[c.ghlId] = { calls:0, pickups:0, demos:0, nos:0, lastResult:'', lastCall:'' };
+    var cl = callLog[c.ghlId];
+    cl.calls++;
+    cl.lastCall = new Date().toISOString();
+    if (type === 'pickup') { cl.pickups++; cl.lastResult = 'picked up'; }
+    else if (type === 'demo') { cl.pickups++; cl.demos++; cl.lastResult = 'demo booked'; }
+    else if (type === 'no') { cl.nos++; cl.lastResult = 'no'; }
+    else { cl.lastResult = 'no answer'; }
+    saveCallLog();
+
+    // Add note to GHL
+    var noteBody = '## Call Log — ' + new Date().toLocaleString() + '\n\n**Result:** ' + cl.lastResult + '\n**Total calls to this lead:** ' + cl.calls;
+    fetch(GHL_API + '/contacts/' + c.ghlId + '/notes', {
+      method: 'POST',
+      headers: { 'Authorization':'Bearer '+GHL_KEY, 'Version':'2021-07-28', 'Content-Type':'application/json' },
+      body: JSON.stringify({ body: noteBody })
+    }).catch(function(){});
+
+    showToast(type === 'demo' ? 'Demo booked!' : type === 'pickup' ? 'Pick up!' : type === 'no' ? 'No' : 'Called', c.name + (c.company ? ' — ' + c.company : ''), type === 'demo' ? 'success' : '');
+
+    // Re-render table to show updated call status
+    renderTable(floridaContacts);
+    populateCallContactSelect();
+  } else {
+    showToast('Logged', 'Select a lead to attach the call', '');
   }
+
   saveCallStats();
   renderCallStats();
 }
@@ -1473,10 +1539,11 @@ function renderCallStats() {
   document.getElementById('stat-demos').textContent = rep.demos;
   document.getElementById('stat-nos').textContent = rep.nos;
   document.getElementById('stat-streak').textContent = rep.streak;
-  // Conversion rate
   var conv = rep.calls > 0 ? Math.round((rep.demos / rep.calls) * 100) : 0;
   document.getElementById('stat-conversion').textContent = conv + '%';
-  // Leaderboard
+  // Summary line on collapsed card
+  var sumLine = document.getElementById('callSummaryLine');
+  if (sumLine) sumLine.textContent = rep.calls > 0 ? rep.calls + ' calls / ' + rep.demos + ' demos today' : '';
   renderLeaderboard();
 }
 
@@ -1484,8 +1551,8 @@ function renderLeaderboard() {
   var rows = Object.entries(callStats.reps).map(function(e) {
     var name = e[0], r = e[1];
     var conv = r.calls > 0 ? Math.round((r.demos / r.calls) * 100) : 0;
-    return { name: name, calls: r.calls, pickups: r.pickups, demos: r.demos, nos: r.nos, conv: conv, bestStreak: r.bestStreak };
-  }).sort(function(a,b) { return b.demos - a.demos || b.pickups - a.pickups || b.calls - a.calls; });
+    return { name:name, calls:r.calls, pickups:r.pickups, demos:r.demos, nos:r.nos, conv:conv, bestStreak:r.bestStreak };
+  }).sort(function(a,b) { return b.demos-a.demos || b.pickups-a.pickups || b.calls-a.calls; });
 
   var html = rows.map(function(r, i) {
     return '<div class="lb-row'+(i===0?' first':'')+'">'
@@ -1506,7 +1573,7 @@ function renderLeaderboard() {
 function resetCallStats() {
   if (!confirm('Reset today\'s call stats?')) return;
   var rep = getActiveRepStats();
-  rep.calls = 0; rep.pickups = 0; rep.demos = 0; rep.nos = 0; rep.streak = 0;
+  rep.calls=0; rep.pickups=0; rep.demos=0; rep.nos=0; rep.streak=0;
   saveCallStats();
   renderCallStats();
   showToast('Stats reset', 'Starting fresh', 'success');
@@ -1625,6 +1692,7 @@ async function loadAllContactsFromGHL() {
     loadPipelineFromGHL();
     statusEl.textContent = floridaContacts.length;
     updateKpis();
+    populateCallContactSelect();
     showToast('Contacts synced', floridaContacts.length + ' Florida leads loaded from GHL', 'success');
   } catch (err) {
     statusEl.textContent = origText;

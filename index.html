@@ -186,6 +186,12 @@ td.clickable:hover strong { color:var(--accent); text-decoration:underline; }
 .call-icon.ci-demo { background:var(--green); }
 .call-icon.ci-no { background:var(--red); }
 .call-icon.ci-vm { background:#7e57c2; }
+.call-log-select { background:var(--surface2); border:1px solid var(--border); color:var(--text-dim); padding:3px 6px; border-radius:5px; font-size:10px; outline:none; cursor:pointer; width:100%; font-family:'Montserrat',sans-serif; }
+.call-log-select:focus { border-color:var(--lime); }
+.call-log-select.logged-call { border-color:var(--text-dim); color:var(--text-dim); }
+.call-log-select.logged-pickup { border-color:var(--gold); color:var(--gold); }
+.call-log-select.logged-demo { border-color:var(--green); color:var(--green); }
+.call-log-select.logged-no { border-color:var(--red); color:var(--red); }
 /* Leaderboard */
 .leaderboard { margin-top:16px; }
 .leaderboard h4 { font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--gold); margin-bottom:10px; }
@@ -937,7 +943,15 @@ function renderTable(data) {
       '<td class="clickable" onclick="openDetail('+i+')"><strong>'+c.name+'</strong></td>'+
       '<td>'+(c.company||'—')+'</td>'+
       '<td>'+c.city+'</td>'+
-      '<td style="cursor:pointer" onclick="selectContactForCall('+i+')"><span style="color:var(--accent);text-decoration:underline">'+formatPhone(c.phone)+'</span>'+callStatusBadge(c.ghlId)+'</td>'+
+      '<td>'+formatPhone(c.phone)+
+      '<select class="call-log-select" onchange="logCallFromRow('+i+',this)" style="display:block;margin-top:4px">'+
+        '<option value="">Log call...</option>'+
+        '<option value="call" style="color:#8aaa98">No Answer</option>'+
+        '<option value="pickup" style="color:#C9A961">Picked Up</option>'+
+        '<option value="demo" style="color:#6fcf97">Demo Booked</option>'+
+        '<option value="no" style="color:#e57373">Not Interested</option>'+
+      '</select>'+
+      callStatusBadge(c.ghlId)+'</td>'+
       '<td>'+(c.email ? '<span class="status-dot dot-has"></span>'+c.email : '<span class="status-dot dot-missing"></span><span style="color:var(--text-dim)">—</span>')+'</td>'+
       '<td>'+c.tags.map(function(t){return '<span class="tag '+tagClass(t)+'">'+tagLabel(t)+'</span>';}).join('')+'</td>'+
       '<td><select class="'+stageClass+'" onchange="onStageChange('+i+',this)">'+
@@ -1476,6 +1490,16 @@ function populateCallContactSelect() {
 }
 
 var selectedCallContactIdx = '';
+
+function logCallFromRow(idx, selectEl) {
+  var type = selectEl.value;
+  if (!type) return;
+  selectedCallContactIdx = idx;
+  logCall(type);
+  // Color the dropdown
+  selectEl.className = 'call-log-select logged-' + type;
+  selectEl.value = '';
+}
 
 function selectContactForCall(idx) {
   selectedCallContactIdx = idx;

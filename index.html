@@ -925,59 +925,41 @@ function toggleRecording() {
   else { startRecording(); }
 }
 
-function startRecording() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    showToast('Not supported', 'Speech recognition requires Chrome', 'error');
-    return;
-  }
-  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  voiceRecognition = new SpeechRecognition();
-  voiceRecognition.continuous = true;
-  voiceRecognition.interimResults = true;
-  voiceRecognition.lang = 'en-US';
-
-  voiceTranscriptText = '';
-  var finalText = '';
-
-  voiceRecognition.onresult = function(e) {
-    var interim = '';
-    for (var i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) {
-        finalText += e.results[i][0].transcript + ' ';
-      } else {
-        interim += e.results[i][0].transcript;
-      }
+function createRecognizer() {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = new SR();
+  rec.continuous = false;
+  rec.interimResults = false;
+  rec.lang = 'en-US';
+  rec.onresult = function(e) {
+    for (var i = 0; i < e.results.length; i++) {
+      voiceTranscriptText += e.results[i][0].transcript + ' ';
     }
-    voiceTranscriptText = finalText.trim();
     var box = document.getElementById('voiceTranscript');
-    box.textContent = voiceTranscriptText + (interim ? ' ' + interim : '');
-    box.classList.remove('empty');
+    if (box) { box.textContent = voiceTranscriptText.trim(); box.classList.remove('empty'); }
   };
-
-  voiceRecognition.onerror = function(e) {
-    // Ignore common non-fatal errors on mobile
-    if (e.error === 'no-speech' || e.error === 'aborted') return;
-    if (e.error === 'not-allowed') {
-      showToast('Mic blocked', 'Allow microphone access in your browser settings', 'error');
-      stopRecording();
-      return;
-    }
-    showToast('Mic error', e.error, 'error');
-  };
-
-  voiceRecognition.onend = function() {
+  rec.onerror = function() {};
+  rec.onend = function() {
     if (voiceIsRecording) {
-      // Auto-restart after a brief delay (Chrome/mobile stops after ~60s)
       setTimeout(function() {
         if (voiceIsRecording) {
-          try { voiceRecognition.start(); } catch(ex){}
+          try { voiceRecognition = createRecognizer(); voiceRecognition.start(); } catch(ex) { stopRecording(); }
         }
-      }, 300);
+      }, 500);
     }
   };
+  return rec;
+}
 
+function startRecording() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    showToast('Not supported', 'Use Chrome for voice', 'error');
+    return;
+  }
+  voiceTranscriptText = '';
+  voiceRecognition = createRecognizer();
   try { voiceRecognition.start(); } catch(ex) {
-    showToast('Mic error', 'Could not start recording', 'error');
+    showToast('Mic error', 'Allow mic access in settings', 'error');
     return;
   }
   voiceIsRecording = true;
@@ -1544,29 +1526,32 @@ function toggleAddContactVoice() {
   if (acVoiceRecording) { stopAddContactVoice(); }
   else { startAddContactVoice(); }
 }
+function createAcRecognizer() {
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var rec = new SR();
+  rec.continuous = false;
+  rec.interimResults = false;
+  rec.lang = 'en-US';
+  rec.onresult = function(e) {
+    for (var i = 0; i < e.results.length; i++) acVoiceText += e.results[i][0].transcript + ' ';
+    var el = document.getElementById('acVoiceTranscript');
+    if (el) { el.style.display = 'block'; el.textContent = acVoiceText.trim(); }
+  };
+  rec.onerror = function() {};
+  rec.onend = function() {
+    if (acVoiceRecording) setTimeout(function() {
+      if (acVoiceRecording) try { acVoiceRecognition = createAcRecognizer(); acVoiceRecognition.start(); } catch(ex) { stopAddContactVoice(); }
+    }, 500);
+  };
+  return rec;
+}
 function startAddContactVoice() {
   if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    showToast('Not supported', 'Speech recognition requires Chrome', 'error'); return;
+    showToast('Not supported', 'Use Chrome for voice', 'error'); return;
   }
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  acVoiceRecognition = new SR();
-  acVoiceRecognition.continuous = true;
-  acVoiceRecognition.interimResults = true;
-  acVoiceRecognition.lang = 'en-US';
-  var finalText = '';
-  acVoiceRecognition.onresult = function(e) {
-    var interim = '';
-    for (var i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) finalText += e.results[i][0].transcript + ' ';
-      else interim += e.results[i][0].transcript;
-    }
-    acVoiceText = finalText.trim();
-    var el = document.getElementById('acVoiceTranscript');
-    if (el) { el.style.display = 'block'; el.textContent = acVoiceText + (interim ? ' ' + interim : ''); }
-  };
-  acVoiceRecognition.onerror = function(e) { if (e.error !== 'no-speech' && e.error !== 'aborted') showToast('Mic error', e.error, 'error'); };
-  acVoiceRecognition.onend = function() { if (acVoiceRecording) setTimeout(function(){ if(acVoiceRecording) try { acVoiceRecognition.start(); } catch(ex){} }, 300); };
-  try { acVoiceRecognition.start(); } catch(ex) { showToast('Mic error', 'Could not start', 'error'); return; }
+  acVoiceText = '';
+  acVoiceRecognition = createAcRecognizer();
+  try { acVoiceRecognition.start(); } catch(ex) { showToast('Mic error', 'Allow mic access', 'error'); return; }
   acVoiceRecording = true;
   acVoiceSec = 0;
   var btn = document.getElementById('acVoiceBtn');

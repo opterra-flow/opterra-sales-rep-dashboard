@@ -313,19 +313,17 @@ td.clickable:hover strong { color:var(--accent); text-decoration:underline; }
 </div>
 
 <div class="section">
-  <div class="section-title">Voice Memo</div>
+  <div class="section-title">Quick Notes</div>
   <div class="voice-section">
-    <div class="voice-controls">
-      <button class="voice-btn record" id="voiceRecordBtn" onclick="toggleRecording()">&#9679;</button>
-      <div class="voice-timer" id="voiceTimer">0:00</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px">
       <select class="voice-contact-select" id="voiceContactSelect">
-        <option value="">Select a contact to attach memo...</option>
+        <option value="">Attach to a contact...</option>
       </select>
-      <button class="voice-save-btn" id="voiceSaveBtn" onclick="saveVoiceMemo()" disabled>Save to GHL</button>
     </div>
-    <div class="voice-transcript-box empty" id="voiceTranscript" contenteditable="false">Hit record, talk about the lead, and we'll transcribe + summarize it for you.</div>
-    <div id="voiceAssignBadge" style="display:none;margin-bottom:10px;display:none;align-items:center;gap:8px;flex-wrap:wrap"></div>
+    <div class="voice-transcript-box editable" id="voiceTranscript" contenteditable="true" style="min-height:80px" oninput="document.getElementById('voiceSaveBtn').disabled=false">Type or paste your notes about this lead here...</div>
+    <div id="voiceAssignBadge" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
     <div class="voice-recap" id="voiceRecap"><h4>Recap</h4><ul id="voiceRecapList"></ul></div>
+    <button class="voice-save-btn" id="voiceSaveBtn" onclick="saveVoiceMemo()" disabled>Save Note to GHL</button>
   </div>
 </div>
 
@@ -897,111 +895,41 @@ function clickCity(cityName) {
 function clearCityFilter(){document.getElementById('cityFilter').value='';document.getElementById('searchInput').value='';document.getElementById('cityFilterBadge').style.display='none';document.querySelectorAll('.city-chip').forEach(function(c){c.classList.remove('active')});filterTable();}
 function syncCityChips(){var val=document.getElementById('cityFilter').value;document.querySelectorAll('.city-chip').forEach(function(c){c.classList.remove('active')});if(!val)document.getElementById('cityFilterBadge').style.display='none';}
 
-// Voice memo
-var voiceRecognition = null;
+// Voice memo — uses text input instead of broken speech API
 var voiceIsRecording = false;
-var voiceTranscriptText = '';
 var voiceTimerInterval = null;
 var voiceSeconds = 0;
+var voiceTranscriptText = '';
 var TEAM = {
   lilly: { id: '3epC5wV55r1nsxRxNlcn', name: 'Lilly Field', patterns: ['lilly','lil','lilly field'] },
   mikyla: { id: 'cVHlgjmeVBWSQ6snWoz9', name: 'Mikyla Meckelson', patterns: ['mikyla','mykyla','mikayla','mikela','meckelson','mikyla meckelson'] }
 };
 var voiceDetectedTeam = [];
 
-// Populate contact dropdown
 function populateVoiceContacts() {
   var sel = document.getElementById('voiceContactSelect');
+  sel.innerHTML = '<option value="">Select a contact...</option>';
   floridaContacts.forEach(function(c, i) {
     var opt = document.createElement('option');
     opt.value = i;
-    opt.textContent = c.name + (c.company ? ' — ' + c.company : '') + ' (' + c.city + ')';
+    opt.textContent = c.name + (c.company ? ' — ' + c.company : '');
     sel.appendChild(opt);
   });
 }
 
 function toggleRecording() {
-  if (voiceIsRecording) { stopRecording(); }
-  else { startRecording(); }
-}
-
-function createRecognizer() {
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var rec = new SR();
-  rec.continuous = false;
-  rec.interimResults = false;
-  rec.lang = 'en-US';
-  rec.onresult = function(e) {
-    for (var i = 0; i < e.results.length; i++) {
-      voiceTranscriptText += e.results[i][0].transcript + ' ';
-    }
-    var box = document.getElementById('voiceTranscript');
-    if (box) { box.textContent = voiceTranscriptText.trim(); box.classList.remove('empty'); }
-  };
-  rec.onerror = function() {};
-  rec.onend = function() {
-    if (voiceIsRecording) {
-      setTimeout(function() {
-        if (voiceIsRecording) {
-          try { voiceRecognition = createRecognizer(); voiceRecognition.start(); } catch(ex) { stopRecording(); }
-        }
-      }, 500);
-    }
-  };
-  return rec;
-}
-
-function startRecording() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    showToast('Not supported', 'Use Chrome for voice', 'error');
-    return;
-  }
-  voiceTranscriptText = '';
-  voiceRecognition = createRecognizer();
-  try { voiceRecognition.start(); } catch(ex) {
-    showToast('Mic error', 'Allow mic access in settings', 'error');
-    return;
-  }
-  voiceIsRecording = true;
-  voiceSeconds = 0;
-  document.getElementById('voiceRecordBtn').classList.add('recording');
-  document.getElementById('voiceRecordBtn').innerHTML = '&#9632;';
-  document.getElementById('voiceTimer').textContent = '0:00';
-  document.getElementById('voiceTranscript').textContent = 'Listening...';
-  document.getElementById('voiceTranscript').classList.remove('empty');
-  document.getElementById('voiceRecap').style.display = 'none';
-  document.getElementById('voiceSaveBtn').disabled = true;
-
-  voiceTimerInterval = setInterval(function() {
-    voiceSeconds++;
-    var m = Math.floor(voiceSeconds / 60);
-    var s = voiceSeconds % 60;
-    document.getElementById('voiceTimer').textContent = m + ':' + (s < 10 ? '0' : '') + s;
-  }, 1000);
-}
-
-function stopRecording() {
-  voiceIsRecording = false;
-  if (voiceRecognition) { voiceRecognition.stop(); }
-  clearInterval(voiceTimerInterval);
-  document.getElementById('voiceRecordBtn').classList.remove('recording');
-  document.getElementById('voiceRecordBtn').innerHTML = '&#9679;';
-
+  // No recording — the text box IS the memo. Just toggle focus.
   var box = document.getElementById('voiceTranscript');
-  if (voiceTranscriptText.length > 10) {
-    // Make editable
-    box.contentEditable = 'true';
-    box.classList.add('editable');
-    box.addEventListener('input', function() {
-      voiceTranscriptText = box.textContent.trim();
-      generateRecap(voiceTranscriptText);
-      detectTeamMentions(voiceTranscriptText);
-    });
-    generateRecap(voiceTranscriptText);
-    detectTeamMentions(voiceTranscriptText);
-    document.getElementById('voiceSaveBtn').disabled = false;
-  }
+  box.classList.remove('empty');
+  box.contentEditable = 'true';
+  box.classList.add('editable');
+  box.focus();
+  box.textContent = box.textContent === 'Type or paste your notes about this lead here...' ? '' : box.textContent;
+  document.getElementById('voiceSaveBtn').disabled = false;
+  showToast('Ready', 'Type your notes below', 'success');
 }
+
+function stopRecording() {}
 
 function detectTeamMentions(text) {
   var lower = text.toLowerCase();
@@ -1166,15 +1094,6 @@ function openAddContact() {
     '<div><label>Team Size</label><input id="ac-teamsize" placeholder="5"></div>'+
     '<div class="full-width"><label>Pain Points / Notes</label><textarea id="ac-notes" placeholder="What are their biggest challenges? What came up in conversation?"></textarea></div>'+
     '<div class="full-width"><label>Conversation Summary</label><textarea id="ac-summary" placeholder="Quick recap of your interaction..."></textarea></div>'+
-    '<div class="full-width" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px">'+
-      '<label style="font-size:10px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);display:block;margin-bottom:8px">Voice Note (optional)</label>'+
-      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
-        '<button type="button" class="voice-btn record" id="acVoiceBtn" onclick="toggleAddContactVoice()" style="width:40px;height:40px;font-size:16px">&#9679;</button>'+
-        '<span id="acVoiceTimer" style="font-size:14px;color:var(--text-dim);font-variant-numeric:tabular-nums">0:00</span>'+
-        '<span id="acVoiceStatus" style="font-size:11px;color:var(--text-dim)">Tap to record</span>'+
-      '</div>'+
-      '<div id="acVoiceTranscript" style="display:none;margin-top:8px;font-size:12px;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px;white-space:pre-wrap" contenteditable="true"></div>'+
-    '</div>'+
     '<div class="add-form-actions">'+
       '<button class="add-cancel-btn" onclick="closeDetail()">Cancel</button>'+
       '<button class="add-submit-btn" id="addSubmitBtn" onclick="submitNewContact()">Create Lead in GHL</button>'+
@@ -1516,69 +1435,6 @@ function restorePhoneStatuses() {
 }
 
 // Add-contact voice recorder
-var acVoiceRecognition = null;
-var acVoiceRecording = false;
-var acVoiceText = '';
-var acVoiceTimer = null;
-var acVoiceSec = 0;
-
-function toggleAddContactVoice() {
-  if (acVoiceRecording) { stopAddContactVoice(); }
-  else { startAddContactVoice(); }
-}
-function createAcRecognizer() {
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var rec = new SR();
-  rec.continuous = false;
-  rec.interimResults = false;
-  rec.lang = 'en-US';
-  rec.onresult = function(e) {
-    for (var i = 0; i < e.results.length; i++) acVoiceText += e.results[i][0].transcript + ' ';
-    var el = document.getElementById('acVoiceTranscript');
-    if (el) { el.style.display = 'block'; el.textContent = acVoiceText.trim(); }
-  };
-  rec.onerror = function() {};
-  rec.onend = function() {
-    if (acVoiceRecording) setTimeout(function() {
-      if (acVoiceRecording) try { acVoiceRecognition = createAcRecognizer(); acVoiceRecognition.start(); } catch(ex) { stopAddContactVoice(); }
-    }, 500);
-  };
-  return rec;
-}
-function startAddContactVoice() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    showToast('Not supported', 'Use Chrome for voice', 'error'); return;
-  }
-  acVoiceText = '';
-  acVoiceRecognition = createAcRecognizer();
-  try { acVoiceRecognition.start(); } catch(ex) { showToast('Mic error', 'Allow mic access', 'error'); return; }
-  acVoiceRecording = true;
-  acVoiceSec = 0;
-  var btn = document.getElementById('acVoiceBtn');
-  if (btn) { btn.classList.add('recording'); btn.innerHTML = '&#9632;'; }
-  var st = document.getElementById('acVoiceStatus');
-  if (st) st.textContent = 'Recording...';
-  acVoiceTimer = setInterval(function() {
-    acVoiceSec++;
-    var m = Math.floor(acVoiceSec/60), s = acVoiceSec%60;
-    var el = document.getElementById('acVoiceTimer');
-    if (el) el.textContent = m+':'+(s<10?'0':'')+s;
-  }, 1000);
-}
-function stopAddContactVoice() {
-  acVoiceRecording = false;
-  if (acVoiceRecognition) acVoiceRecognition.stop();
-  clearInterval(acVoiceTimer);
-  var btn = document.getElementById('acVoiceBtn');
-  if (btn) { btn.classList.remove('recording'); btn.innerHTML = '&#9679;'; }
-  var st = document.getElementById('acVoiceStatus');
-  if (st) st.textContent = 'Done — edit below if needed';
-  var el = document.getElementById('acVoiceTranscript');
-  if (el) { el.style.display = 'block'; el.contentEditable = 'true'; }
-  // Auto-fill the summary field
-  var summary = document.getElementById('ac-summary');
-  if (summary && acVoiceText && !summary.value) summary.value = acVoiceText;
-}
 
 // Init — render embedded data
 restorePhoneStatuses();

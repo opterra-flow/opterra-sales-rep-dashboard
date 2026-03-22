@@ -955,19 +955,31 @@ function startRecording() {
   };
 
   voiceRecognition.onerror = function(e) {
-    if (e.error !== 'no-speech') {
-      showToast('Mic error', e.error, 'error');
+    // Ignore common non-fatal errors on mobile
+    if (e.error === 'no-speech' || e.error === 'aborted') return;
+    if (e.error === 'not-allowed') {
+      showToast('Mic blocked', 'Allow microphone access in your browser settings', 'error');
+      stopRecording();
+      return;
     }
+    showToast('Mic error', e.error, 'error');
   };
 
   voiceRecognition.onend = function() {
     if (voiceIsRecording) {
-      // Auto-restart if still recording (Chrome stops after ~60s)
-      try { voiceRecognition.start(); } catch(ex){}
+      // Auto-restart after a brief delay (Chrome/mobile stops after ~60s)
+      setTimeout(function() {
+        if (voiceIsRecording) {
+          try { voiceRecognition.start(); } catch(ex){}
+        }
+      }, 300);
     }
   };
 
-  voiceRecognition.start();
+  try { voiceRecognition.start(); } catch(ex) {
+    showToast('Mic error', 'Could not start recording', 'error');
+    return;
+  }
   voiceIsRecording = true;
   voiceSeconds = 0;
   document.getElementById('voiceRecordBtn').classList.add('recording');
@@ -1552,8 +1564,9 @@ function startAddContactVoice() {
     var el = document.getElementById('acVoiceTranscript');
     if (el) { el.style.display = 'block'; el.textContent = acVoiceText + (interim ? ' ' + interim : ''); }
   };
-  acVoiceRecognition.onend = function() { if (acVoiceRecording) try { acVoiceRecognition.start(); } catch(ex){} };
-  acVoiceRecognition.start();
+  acVoiceRecognition.onerror = function(e) { if (e.error !== 'no-speech' && e.error !== 'aborted') showToast('Mic error', e.error, 'error'); };
+  acVoiceRecognition.onend = function() { if (acVoiceRecording) setTimeout(function(){ if(acVoiceRecording) try { acVoiceRecognition.start(); } catch(ex){} }, 300); };
+  try { acVoiceRecognition.start(); } catch(ex) { showToast('Mic error', 'Could not start', 'error'); return; }
   acVoiceRecording = true;
   acVoiceSec = 0;
   var btn = document.getElementById('acVoiceBtn');

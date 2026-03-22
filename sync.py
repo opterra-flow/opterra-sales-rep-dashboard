@@ -19,15 +19,13 @@ FIELD_MAP = {
 }
 
 def fetch_json(url):
-    import urllib.request
-    req = urllib.request.Request(url, headers={
-        "Authorization": f"Bearer {KEY}",
-        "Version": "2021-07-28",
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-    })
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read())
+    import subprocess as sp
+    r = sp.run(['curl', '-s', url,
+        '-H', f'Authorization: Bearer {KEY}',
+        '-H', 'Version: 2021-07-28',
+        '-H', 'Content-Type: application/json'
+    ], capture_output=True, text=True)
+    return json.loads(r.stdout)
 
 # Fetch all contacts
 all_contacts = []

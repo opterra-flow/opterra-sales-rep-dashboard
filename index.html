@@ -361,16 +361,6 @@ td.clickable:hover strong { color:var(--accent); text-decoration:underline; }
     <div class="section-title" style="margin-bottom:0;flex:1">All Florida Contacts (<span id="contactCountLabel">39</span>) <span class="city-filter-active" id="cityFilterBadge" onclick="clearCityFilter()"></span></div>
     <button onclick="openAddContact()" style="background:var(--lime);color:var(--forest);border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:'Montserrat',sans-serif;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'" title="Add new lead"><span style="font-size:18px;line-height:1">+</span> NEW LEAD</button>
   </div>
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px">
-    <div id="callBarContact" style="font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:12px">Tap a phone number below to select, then log the result</div>
-    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-width:240px;margin:0 auto">
-      <div class="call-circle calls" onclick="logCall('call')"><div class="cc-ring" id="stat-calls" style="width:52px;height:52px;font-size:18px">0</div><div class="cc-label">Calls</div><div class="cc-undo" onclick="event.stopPropagation();undoCall('call')">undo</div></div>
-      <div class="call-circle pickups" onclick="logCall('pickup')"><div class="cc-ring" id="stat-pickups" style="width:52px;height:52px;font-size:18px">0</div><div class="cc-label">Pick Ups</div><div class="cc-undo" onclick="event.stopPropagation();undoCall('pickup')">undo</div></div>
-      <div class="call-circle demos" onclick="logCall('demo')"><div class="cc-ring" id="stat-demos" style="width:52px;height:52px;font-size:18px">0</div><div class="cc-label">Demos</div><div class="cc-undo" onclick="event.stopPropagation();undoCall('demo')">undo</div></div>
-      <div class="call-circle nos" onclick="logCall('no')"><div class="cc-ring" id="stat-nos" style="width:52px;height:52px;font-size:18px">0</div><div class="cc-label">No's</div><div class="cc-undo" onclick="event.stopPropagation();undoCall('no')">undo</div></div>
-    </div>
-    <div style="text-align:center;margin-top:10px"><button class="call-reset-btn" onclick="resetCallStats()">Reset</button></div>
-  </div>
   <div class="table-wrap">
     <div class="table-controls">
       <input type="text" id="searchInput" placeholder="Search name, company, city..." oninput="filterTable()">
@@ -382,7 +372,7 @@ td.clickable:hover strong { color:var(--accent); text-decoration:underline; }
         <thead><tr>
           <th onclick="sortTable(0)">Contact</th><th onclick="sortTable(1)">Company</th><th onclick="sortTable(2)">City</th><th>Phone</th><th>Email</th><th>Segment</th><th>Stage</th><th onclick="sortTable(7)">Added</th>
         </tr></thead>
-        <tbody id="flBody"></tbody>
+        <tbody id="flBody"><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-dim)">Loading contacts from GHL...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -942,15 +932,7 @@ function renderTable(data) {
       '<td class="clickable" onclick="openDetail('+i+')"><strong>'+c.name+'</strong></td>'+
       '<td>'+(c.company||'—')+'</td>'+
       '<td>'+c.city+'</td>'+
-      '<td>'+formatPhone(c.phone)+
-      '<select class="call-log-select" onchange="logCallFromRow('+i+',this)" style="display:block;margin-top:4px">'+
-        '<option value="">Log call...</option>'+
-        '<option value="call" style="color:#8aaa98">No Answer</option>'+
-        '<option value="pickup" style="color:#C9A961">Picked Up</option>'+
-        '<option value="demo" style="color:#6fcf97">Demo Booked</option>'+
-        '<option value="no" style="color:#e57373">Not Interested</option>'+
-      '</select>'+
-      callStatusBadge(c.ghlId)+'</td>'+
+      '<td>'+formatPhone(c.phone)+'</td>'+
       '<td>'+(c.email ? '<span class="status-dot dot-has"></span>'+c.email : '<span class="status-dot dot-missing"></span><span style="color:var(--text-dim)">—</span>')+'</td>'+
       '<td>'+c.tags.map(function(t){return '<span class="tag '+tagClass(t)+'">'+tagLabel(t)+'</span>';}).join('')+'</td>'+
       '<td><select class="'+stageClass+'" onchange="onStageChange('+i+',this)">'+

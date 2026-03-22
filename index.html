@@ -2,14 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Opterra FL">
-<meta name="theme-color" content="#1A3A2F">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Opterra Florida — Internal Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
@@ -28,7 +21,11 @@ body { font-family:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',sans
 .header .badge { background:var(--gold); color:var(--forest); font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px; }
 .header .meta { font-size:12px; color:var(--text-dim); }
 .kpi-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
-.kpi { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 20px; }
+.kpi { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 20px; cursor:pointer; transition:all 0.2s; position:relative; }
+.kpi:hover { border-color:var(--gold); }
+.kpi.expanded { border-color:var(--lime); }
+.kpi-expand { display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
+.kpi.expanded .kpi-expand { display:block; }
 .kpi .label { font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:6px; }
 .kpi .value { font-size:28px; font-weight:700; letter-spacing:-1px; }
 .kpi .sub { font-size:12px; color:var(--text-dim); margin-top:4px; }
@@ -168,6 +165,42 @@ td.clickable:hover strong { color:var(--accent); text-decoration:underline; }
 .add-submit-btn { background:var(--lime); color:var(--forest); }
 .add-submit-btn:hover { opacity:0.85; }
 .add-submit-btn:disabled { opacity:0.4; cursor:not-allowed; }
+/* Cold call tracker */
+.call-tracker { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; }
+.call-tracker-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:16px; }
+.call-stat { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; cursor:pointer; transition:all 0.15s; user-select:none; }
+.call-stat:hover { border-color:var(--lime); }
+.call-stat:active { transform:scale(0.96); }
+.call-stat .cs-val { font-size:28px; font-weight:700; }
+.call-stat .cs-label { font-size:10px; text-transform:uppercase; letter-spacing:0.6px; color:var(--text-dim); margin-top:2px; }
+.call-stat.calls .cs-val { color:var(--accent); }
+.call-stat.pickups .cs-val { color:var(--gold); }
+.call-stat.demos .cs-val { color:var(--green); }
+.call-stat.nos .cs-val { color:var(--red); }
+.call-stat .cs-plus { font-size:11px; color:var(--text-dim); margin-top:4px; }
+/* Leaderboard */
+.leaderboard { margin-top:16px; }
+.leaderboard h4 { font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--gold); margin-bottom:10px; }
+.lb-row { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:8px; margin-bottom:6px; background:var(--surface2); border:1px solid var(--border); }
+.lb-row.first { border-color:var(--lime); background:rgba(212,225,87,0.08); }
+.lb-rank { font-size:18px; font-weight:700; width:28px; text-align:center; }
+.lb-row.first .lb-rank { color:var(--lime); }
+.lb-name { flex:1; font-size:13px; font-weight:600; }
+.lb-stats { display:flex; gap:16px; font-size:12px; color:var(--text-dim); }
+.lb-stats span { white-space:nowrap; }
+.lb-stats .highlight { color:var(--lime); font-weight:600; }
+.lb-rate { font-size:13px; font-weight:700; color:var(--green); }
+/* Streak */
+.streak-bar { display:flex; align-items:center; gap:8px; margin-top:12px; padding:10px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; }
+.streak-bar .streak-fire { font-size:20px; }
+.streak-bar .streak-text { font-size:12px; color:var(--text-dim); }
+.streak-bar .streak-count { font-size:16px; font-weight:700; color:var(--lime); }
+/* Session timer */
+.session-timer { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-dim); margin-top:10px; }
+.session-timer .timer-val { font-size:16px; font-weight:600; color:var(--accent); font-variant-numeric:tabular-nums; }
+/* Reset button */
+.call-reset-btn { background:var(--surface2); border:1px solid var(--border); color:var(--text-dim); padding:6px 14px; border-radius:6px; font-size:11px; cursor:pointer; font-family:'Montserrat',sans-serif; margin-top:10px; }
+.call-reset-btn:hover { border-color:var(--red); color:var(--red); }
 
 /* Detail panel overlay */
 .detail-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; display:none; justify-content:center; align-items:flex-start; padding:40px 20px; overflow-y:auto; }
@@ -243,6 +276,11 @@ td.clickable:hover strong { color:var(--accent); text-decoration:underline; }
   .add-form { grid-template-columns:1fr; }
   .add-form-actions { flex-direction:column; }
   .add-form-actions button { width:100%; }
+  /* Call tracker mobile */
+  .call-tracker-grid { grid-template-columns:repeat(2,1fr); }
+  .call-stat .cs-val { font-size:22px; }
+  .lb-stats { flex-wrap:wrap; gap:6px; }
+  .lb-row { flex-wrap:wrap; }
   /* Book demo button */
   div[style*="margin-bottom:24px"] a { width:100%; text-align:center; padding:16px 20px !important; font-size:15px !important; }
   /* New lead button */
@@ -325,13 +363,40 @@ td.clickable:hover strong { color:var(--accent); text-decoration:underline; }
   </div>
 </div>
 
-<div class="kpi-row">
-  <div class="kpi"><div class="label">Florida Leads</div><div class="value accent">39</div><div class="sub">3.8% of total CRM (1,015)</div></div>
-  <div class="kpi"><div class="label">With Phone</div><div class="value green">39</div><div class="sub">100% capture rate</div></div>
-  <div class="kpi"><div class="label">With Email</div><div class="value orange">10</div><div class="sub">25.6% — needs enrichment</div></div>
-  <div class="kpi"><div class="label">Cities Covered</div><div class="value pink">21</div><div class="sub">Across 5 metro areas</div></div>
-  <div class="kpi"><div class="label">Top Segment</div><div class="value" style="font-size:18px;color:var(--green)">Holistic Medical</div><div class="sub">26 of 39 contacts (66.7%)</div></div>
-  <div class="kpi"><div class="label">Lead Source</div><div class="value" style="font-size:18px;color:var(--accent)">Optiflow</div><div class="sub">100% from lead gen system</div></div>
+<div class="kpi-row" id="kpiRow">
+  <div class="kpi" onclick="toggleKpi(this)" id="kpi-leads"><div class="label">Florida Leads</div><div class="value accent" id="kpi-leads-val">—</div><div class="sub" id="kpi-leads-sub">Loading from GHL...</div>
+    <div class="kpi-expand"><div style="font-size:12px;color:var(--text-dim)">Total contacts in GHL with state = Florida. Auto-refreshes every 5 minutes as new leads are scraped or added.</div></div>
+  </div>
+  <div class="kpi" onclick="toggleKpi(this)" id="kpi-phone"><div class="label">With Phone</div><div class="value green" id="kpi-phone-val">—</div><div class="sub" id="kpi-phone-sub">Loading...</div>
+    <div class="kpi-expand" id="callTrackerExpand">
+      <div style="font-size:12px;font-weight:600;color:var(--lime);margin-bottom:12px">COLD CALL TRACKER — tap to count</div>
+      <div class="call-tracker-grid">
+        <div class="call-stat calls" onclick="event.stopPropagation();bumpStat('calls')"><div class="cs-val" id="stat-calls">0</div><div class="cs-label">Calls</div><div class="cs-plus">tap +1</div></div>
+        <div class="call-stat pickups" onclick="event.stopPropagation();bumpStat('pickups')"><div class="cs-val" id="stat-pickups">0</div><div class="cs-label">Pick Ups</div><div class="cs-plus">tap +1</div></div>
+        <div class="call-stat demos" onclick="event.stopPropagation();bumpStat('demos')"><div class="cs-val" id="stat-demos">0</div><div class="cs-label">Demos</div><div class="cs-plus">tap +1</div></div>
+        <div class="call-stat nos" onclick="event.stopPropagation();bumpStat('nos')"><div class="cs-val" id="stat-nos">0</div><div class="cs-label">No's</div><div class="cs-plus">tap +1</div></div>
+      </div>
+      <div class="streak-bar"><span class="streak-fire">&#128293;</span><span class="streak-text">Pickup streak:</span><span class="streak-count" id="stat-streak">0</span></div>
+      <div class="session-timer"><span>Session:</span><span class="timer-val" id="sessionTimer">0:00</span><span style="margin-left:auto;font-size:11px">Conversion: <strong id="stat-conversion" style="color:var(--green)">0%</strong></span></div>
+      <div class="leaderboard" id="leaderboard">
+        <h4>Leaderboard — Today</h4>
+        <div id="leaderboardRows"></div>
+      </div>
+      <button class="call-reset-btn" onclick="event.stopPropagation();resetCallStats()">Reset today's session</button>
+    </div>
+  </div>
+  <div class="kpi" onclick="toggleKpi(this)" id="kpi-email"><div class="label">With Email</div><div class="value orange" id="kpi-email-val">—</div><div class="sub" id="kpi-email-sub">Loading...</div>
+    <div class="kpi-expand"><div style="font-size:12px;color:var(--text-dim)">Contacts with email on file. Emails are pulled from GHL and enriched from scraping. Missing emails = enrichment opportunity.</div></div>
+  </div>
+  <div class="kpi" onclick="toggleKpi(this)" id="kpi-cities"><div class="label">Cities Covered</div><div class="value pink" id="kpi-cities-val">—</div><div class="sub" id="kpi-cities-sub">Loading...</div>
+    <div class="kpi-expand"><div id="kpi-cities-list" style="font-size:12px;color:var(--text-dim)"></div></div>
+  </div>
+  <div class="kpi" onclick="toggleKpi(this)" id="kpi-segment"><div class="label">Top Segment</div><div class="value" style="font-size:18px;color:var(--green)" id="kpi-segment-val">—</div><div class="sub" id="kpi-segment-sub">Loading...</div>
+    <div class="kpi-expand"><div id="kpi-segment-breakdown" style="font-size:12px"></div></div>
+  </div>
+  <div class="kpi" onclick="toggleKpi(this)" id="kpi-source"><div class="label">Lead Source</div><div class="value" style="font-size:18px;color:var(--accent)" id="kpi-source-val">—</div><div class="sub" id="kpi-source-sub">Loading...</div>
+    <div class="kpi-expand"><div id="kpi-source-breakdown" style="font-size:12px"></div></div>
+  </div>
 </div>
 
 <div class="two-col section">
@@ -1314,6 +1379,153 @@ function submitNewContact() {
   });
 }
 
+// KPI toggle
+function toggleKpi(el) { el.classList.toggle('expanded'); }
+
+// Update KPIs after data loads
+function updateKpis() {
+  var total = floridaContacts.length;
+  var withPhone = floridaContacts.filter(function(c){ return c.phone; }).length;
+  var withEmail = floridaContacts.filter(function(c){ return c.email; }).length;
+  var cities = {};
+  var segments = {};
+  var sources = {};
+  floridaContacts.forEach(function(c) {
+    if (c.city) cities[c.city] = (cities[c.city]||0)+1;
+    c.tags.forEach(function(t){ segments[t] = (segments[t]||0)+1; });
+    // source from GHL data
+  });
+  var cityCount = Object.keys(cities).length;
+  var topSeg = Object.entries(segments).sort(function(a,b){return b[1]-a[1];})[0];
+
+  document.getElementById('kpi-leads-val').textContent = total;
+  document.getElementById('kpi-leads-sub').textContent = total + ' Florida contacts in GHL';
+  document.getElementById('kpi-phone-val').textContent = withPhone;
+  document.getElementById('kpi-phone-sub').textContent = (total?Math.round(withPhone/total*100):0) + '% capture rate';
+  document.getElementById('kpi-email-val').textContent = withEmail;
+  document.getElementById('kpi-email-sub').textContent = (total?Math.round(withEmail/total*100):0) + '% — ' + (withEmail < total*0.5 ? 'needs enrichment' : 'good coverage');
+  document.getElementById('kpi-cities-val').textContent = cityCount;
+  document.getElementById('kpi-cities-sub').textContent = 'Across Florida';
+  // City list
+  var cityHtml = Object.entries(cities).sort(function(a,b){return b[1]-a[1];}).map(function(e){
+    return '<span style="display:inline-block;margin:2px 4px;padding:2px 8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border)">'+e[0]+' <strong style="color:var(--lime)">'+e[1]+'</strong></span>';
+  }).join('');
+  document.getElementById('kpi-cities-list').innerHTML = cityHtml;
+  // Segment
+  if (topSeg) {
+    var segLabels = {holistic_medical:'Holistic Medical',med_spa:'Med Spa',chiro:'Chiro',acupuncture:'Acupuncture',massage_therapy:'Massage',biohacking_recovery:'Biohacking'};
+    document.getElementById('kpi-segment-val').textContent = segLabels[topSeg[0]] || topSeg[0];
+    document.getElementById('kpi-segment-sub').textContent = topSeg[1] + ' of ' + total + ' (' + Math.round(topSeg[1]/total*100) + '%)';
+    var segHtml = Object.entries(segments).sort(function(a,b){return b[1]-a[1];}).map(function(e){
+      return '<div style="display:flex;justify-content:space-between;padding:3px 0"><span>'+(segLabels[e[0]]||e[0])+'</span><strong style="color:var(--lime)">'+e[1]+'</strong></div>';
+    }).join('');
+    document.getElementById('kpi-segment-breakdown').innerHTML = segHtml;
+  }
+  document.getElementById('kpi-source-val').textContent = 'Optiflow';
+  document.getElementById('kpi-source-sub').textContent = 'Primary lead gen system';
+}
+
+// === COLD CALL TRACKER ===
+var CALL_STORAGE_KEY = 'opterra_call_stats';
+var callStats = loadCallStats();
+var sessionStartTime = Date.now();
+var sessionTimerInterval = null;
+
+function loadCallStats() {
+  try {
+    var stored = localStorage.getItem(CALL_STORAGE_KEY);
+    if (stored) {
+      var data = JSON.parse(stored);
+      // Check if same day
+      var today = new Date().toISOString().slice(0,10);
+      if (data.date === today) return data;
+    }
+  } catch(e){}
+  return { date: new Date().toISOString().slice(0,10), reps: { 'Sales Rep 1': { calls:0, pickups:0, demos:0, nos:0, streak:0, bestStreak:0 } }, activeRep: 'Sales Rep 1' };
+}
+
+function saveCallStats() {
+  callStats.date = new Date().toISOString().slice(0,10);
+  localStorage.setItem(CALL_STORAGE_KEY, JSON.stringify(callStats));
+}
+
+function getActiveRepStats() {
+  return callStats.reps[callStats.activeRep];
+}
+
+function bumpStat(stat) {
+  var rep = getActiveRepStats();
+  rep[stat]++;
+  if (stat === 'pickups') {
+    rep.streak++;
+    if (rep.streak > rep.bestStreak) rep.bestStreak = rep.streak;
+  } else if (stat === 'nos') {
+    rep.streak = 0;
+  }
+  saveCallStats();
+  renderCallStats();
+}
+
+function renderCallStats() {
+  var rep = getActiveRepStats();
+  document.getElementById('stat-calls').textContent = rep.calls;
+  document.getElementById('stat-pickups').textContent = rep.pickups;
+  document.getElementById('stat-demos').textContent = rep.demos;
+  document.getElementById('stat-nos').textContent = rep.nos;
+  document.getElementById('stat-streak').textContent = rep.streak;
+  // Conversion rate
+  var conv = rep.calls > 0 ? Math.round((rep.demos / rep.calls) * 100) : 0;
+  document.getElementById('stat-conversion').textContent = conv + '%';
+  // Leaderboard
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  var rows = Object.entries(callStats.reps).map(function(e) {
+    var name = e[0], r = e[1];
+    var conv = r.calls > 0 ? Math.round((r.demos / r.calls) * 100) : 0;
+    return { name: name, calls: r.calls, pickups: r.pickups, demos: r.demos, nos: r.nos, conv: conv, bestStreak: r.bestStreak };
+  }).sort(function(a,b) { return b.demos - a.demos || b.pickups - a.pickups || b.calls - a.calls; });
+
+  var html = rows.map(function(r, i) {
+    return '<div class="lb-row'+(i===0?' first':'')+'">'
+      +'<div class="lb-rank">'+(i===0?'&#9733;':(i+1))+'</div>'
+      +'<div class="lb-name">'+r.name+'</div>'
+      +'<div class="lb-stats">'
+      +'<span>'+r.calls+' calls</span>'
+      +'<span>'+r.pickups+' picks</span>'
+      +'<span class="highlight">'+r.demos+' demos</span>'
+      +'<span>'+r.nos+' no\'s</span>'
+      +'</div>'
+      +'<div class="lb-rate">'+r.conv+'%</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('leaderboardRows').innerHTML = html;
+}
+
+function resetCallStats() {
+  if (!confirm('Reset today\'s call stats?')) return;
+  var rep = getActiveRepStats();
+  rep.calls = 0; rep.pickups = 0; rep.demos = 0; rep.nos = 0; rep.streak = 0;
+  saveCallStats();
+  renderCallStats();
+  showToast('Stats reset', 'Starting fresh', 'success');
+}
+
+function startSessionTimer() {
+  sessionStartTime = Date.now();
+  sessionTimerInterval = setInterval(function() {
+    var elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+    var m = Math.floor(elapsed / 60);
+    var s = elapsed % 60;
+    document.getElementById('sessionTimer').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+  }, 1000);
+}
+
+// Init call tracker
+renderCallStats();
+startSessionTimer();
+
 // Live data loading from GHL
 var FIELD_MAP = {
   'wap95mRbxqOLLgN4p90a':'business_segment','w0BJpuVi963KKQo9hoLn':'primary_service',
@@ -1412,6 +1624,7 @@ async function loadAllContactsFromGHL() {
     populateVoiceContacts();
     loadPipelineFromGHL();
     statusEl.textContent = floridaContacts.length;
+    updateKpis();
     showToast('Contacts synced', floridaContacts.length + ' Florida leads loaded from GHL', 'success');
   } catch (err) {
     statusEl.textContent = origText;

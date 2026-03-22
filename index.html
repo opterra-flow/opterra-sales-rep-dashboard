@@ -354,6 +354,18 @@ td.clickable:hover strong { color:var(--accent); text-decoration:underline; }
   <div class="section-title">All Florida Contacts (<span id="contactCountLabel">39</span>) <span class="city-filter-active" id="cityFilterBadge" onclick="clearCityFilter()"></span>
     <button onclick="openAddContact()" style="margin-left:auto;background:var(--lime);color:var(--forest);border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:'Montserrat',sans-serif;transition:opacity 0.2s" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'" title="Add new lead"><span style="font-size:18px;line-height:1">+</span> NEW LEAD</button>
   </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <div id="callBarContact" style="font-size:13px;color:var(--text-dim);flex:1;min-width:120px">Tap a phone number to select a lead</div>
+      <div class="call-tracker-grid" style="margin-bottom:0;gap:10px">
+        <div class="call-circle calls" onclick="logCall('call')"><div class="cc-ring" id="stat-calls" style="width:48px;height:48px;font-size:16px">0</div><div class="cc-label">Calls</div><div class="cc-undo" onclick="event.stopPropagation();undoCall('call')">undo</div></div>
+        <div class="call-circle pickups" onclick="logCall('pickup')"><div class="cc-ring" id="stat-pickups" style="width:48px;height:48px;font-size:16px">0</div><div class="cc-label">Pick Ups</div><div class="cc-undo" onclick="event.stopPropagation();undoCall('pickup')">undo</div></div>
+        <div class="call-circle demos" onclick="logCall('demo')"><div class="cc-ring" id="stat-demos" style="width:48px;height:48px;font-size:16px">0</div><div class="cc-label">Demos</div><div class="cc-undo" onclick="event.stopPropagation();undoCall('demo')">undo</div></div>
+        <div class="call-circle nos" onclick="logCall('no')"><div class="cc-ring" id="stat-nos" style="width:48px;height:48px;font-size:16px">0</div><div class="cc-label">No\'s</div><div class="cc-undo" onclick="event.stopPropagation();undoCall('no')">undo</div></div>
+      </div>
+      <button class="call-reset-btn" onclick="resetCallStats()" style="margin-top:0">Reset</button>
+    </div>
+  </div>
   <div class="table-wrap">
     <div class="table-controls">
       <input type="text" id="searchInput" placeholder="Search name, company, city..." oninput="filterTable()">
@@ -371,41 +383,6 @@ td.clickable:hover strong { color:var(--accent); text-decoration:underline; }
   </div>
 </div>
 
-<div class="section">
-  <div class="kpi" onclick="toggleKpi(this)" id="kpi-phone" style="cursor:pointer">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div class="label">Cold Call Tracker</div>
-        <div style="display:flex;align-items:baseline;gap:16px">
-          <div class="value green" id="kpi-phone-val">—</div>
-          <span style="font-size:13px;color:var(--text-dim)" id="kpi-phone-sub">leads with phone</span>
-        </div>
-      </div>
-      <div style="font-size:11px;color:var(--text-dim);text-align:right">tap to open<br><span id="callSummaryLine" style="color:var(--lime);font-weight:600"></span></div>
-    </div>
-    <div class="kpi-expand" id="callTrackerExpand" style="padding-top:18px">
-      <div style="margin-bottom:14px">
-        <label style="font-size:10px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-dim);display:block;margin-bottom:4px">Calling</label>
-        <select id="callContactSelect" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;width:100%;outline:none;font-family:'Montserrat',sans-serif" onclick="event.stopPropagation()">
-          <option value="">Select a lead before logging...</option>
-        </select>
-      </div>
-      <div class="call-tracker-grid">
-        <div class="call-circle calls" onclick="event.stopPropagation();logCall('call')"><div class="cc-ring" id="stat-calls">0</div><div class="cc-label">Calls</div><div class="cc-undo" onclick="event.stopPropagation();undoCall('call')">undo</div></div>
-        <div class="call-circle pickups" onclick="event.stopPropagation();logCall('pickup')"><div class="cc-ring" id="stat-pickups">0</div><div class="cc-label">Pick Ups</div><div class="cc-undo" onclick="event.stopPropagation();undoCall('pickup')">undo</div></div>
-        <div class="call-circle demos" onclick="event.stopPropagation();logCall('demo')"><div class="cc-ring" id="stat-demos">0</div><div class="cc-label">Demos</div><div class="cc-undo" onclick="event.stopPropagation();undoCall('demo')">undo</div></div>
-        <div class="call-circle nos" onclick="event.stopPropagation();logCall('no')"><div class="cc-ring" id="stat-nos">0</div><div class="cc-label">No's</div><div class="cc-undo" onclick="event.stopPropagation();undoCall('no')">undo</div></div>
-      </div>
-      <div class="streak-bar"><span class="streak-fire">&#128293;</span><span class="streak-text">Pickup streak:</span><span class="streak-count" id="stat-streak">0</span></div>
-      <div class="session-timer"><span>Session:</span><span class="timer-val" id="sessionTimer">0:00</span><span style="margin-left:auto;font-size:11px">Conversion: <strong id="stat-conversion" style="color:var(--green)">0%</strong></span></div>
-      <div class="leaderboard" id="leaderboard">
-        <h4>Leaderboard — Today</h4>
-        <div id="leaderboardRows"></div>
-      </div>
-      <button class="call-reset-btn" onclick="event.stopPropagation();resetCallStats()">Reset today's session</button>
-    </div>
-  </div>
-</div>
 
 <div class="two-col section">
   <div>
@@ -960,7 +937,7 @@ function renderTable(data) {
       '<td class="clickable" onclick="openDetail('+i+')"><strong>'+c.name+'</strong></td>'+
       '<td>'+(c.company||'—')+'</td>'+
       '<td>'+c.city+'</td>'+
-      '<td>'+formatPhone(c.phone)+'<br>'+callStatusBadge(c.ghlId)+'</td>'+
+      '<td style="cursor:pointer" onclick="selectContactForCall('+i+')"><span style="color:var(--accent);text-decoration:underline">'+formatPhone(c.phone)+'</span>'+callStatusBadge(c.ghlId)+'</td>'+
       '<td>'+(c.email ? '<span class="status-dot dot-has"></span>'+c.email : '<span class="status-dot dot-missing"></span><span style="color:var(--text-dim)">—</span>')+'</td>'+
       '<td>'+c.tags.map(function(t){return '<span class="tag '+tagClass(t)+'">'+tagLabel(t)+'</span>';}).join('')+'</td>'+
       '<td><select class="'+stageClass+'" onchange="onStageChange('+i+',this)">'+
@@ -1498,9 +1475,27 @@ function populateCallContactSelect() {
   });
 }
 
+var selectedCallContactIdx = '';
+
+function selectContactForCall(idx) {
+  selectedCallContactIdx = idx;
+  var c = floridaContacts[idx];
+  var bar = document.getElementById('callBarContact');
+  bar.innerHTML = '<span style="color:var(--lime);font-weight:600">' + c.name + '</span>' +
+    (c.company ? '<span style="color:var(--text-dim)"> — ' + c.company + '</span>' : '') +
+    '<br><span style="font-size:11px;color:var(--text-dim)">Tap a circle to log the call result</span>';
+  // Highlight the row
+  document.querySelectorAll('#flBody tr').forEach(function(r,ri) {
+    r.style.background = ri === idx ? 'rgba(212,225,87,0.08)' : '';
+  });
+  // Scroll call bar into view
+  document.getElementById('callBarContact').scrollIntoView({ behavior:'smooth', block:'nearest' });
+  showToast('Selected', c.name, '');
+}
+
 function logCall(type) {
   var rep = getActiveRepStats();
-  var selIdx = document.getElementById('callContactSelect').value;
+  var selIdx = selectedCallContactIdx;
 
   // Update global stats
   if (type === 'call') rep.calls++;
@@ -1509,8 +1504,8 @@ function logCall(type) {
   else if (type === 'no') { rep.calls++; rep.nos++; rep.streak = 0; }
 
   // Attach to selected contact
-  if (selIdx !== '') {
-    var c = floridaContacts[parseInt(selIdx)];
+  if (selIdx !== '' && selIdx !== undefined) {
+    var c = floridaContacts[selIdx];
     if (!callLog[c.ghlId]) callLog[c.ghlId] = { calls:0, pickups:0, demos:0, nos:0, lastResult:'', lastCall:'', history:[] };
     var cl = callLog[c.ghlId];
     if (!cl.history) cl.history = [];
@@ -1535,7 +1530,6 @@ function logCall(type) {
     showToast(type === 'demo' ? 'Demo booked!' : type === 'pickup' ? 'Pick up!' : type === 'no' ? 'No' : 'Called', c.name + (c.company ? ' — ' + c.company : ''), type === 'demo' ? 'success' : '');
 
     renderTable(floridaContacts);
-    populateCallContactSelect();
   } else {
     showToast('Logged', 'Select a lead to attach the call', '');
   }
@@ -1553,9 +1547,9 @@ function undoCall(type) {
   else if (type === 'no') { if (rep.nos > 0) rep.nos--; if (rep.calls > 0) rep.calls--; }
 
   // Undo from last selected contact if one was selected
-  var selIdx = document.getElementById('callContactSelect').value;
-  if (selIdx !== '') {
-    var c = floridaContacts[parseInt(selIdx)];
+  var selIdx = selectedCallContactIdx;
+  if (selIdx !== '' && selIdx !== undefined) {
+    var c = floridaContacts[selIdx];
     var cl = callLog[c.ghlId];
     if (cl) {
       if (cl.calls > 0) cl.calls--;
@@ -1571,8 +1565,7 @@ function undoCall(type) {
       cl.lastResult = (cl.history && cl.history.length > 0) ? cl.history[cl.history.length-1] : '';
       saveCallLog();
       renderTable(floridaContacts);
-      populateCallContactSelect();
-    }
+      }
   }
 
   saveCallStats();
@@ -1740,7 +1733,6 @@ async function loadAllContactsFromGHL() {
     loadPipelineFromGHL();
     statusEl.textContent = floridaContacts.length;
     updateKpis();
-    populateCallContactSelect();
     showToast('Contacts synced', floridaContacts.length + ' Florida leads loaded from GHL', 'success');
   } catch (err) {
     statusEl.textContent = origText;
